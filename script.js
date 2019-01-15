@@ -54,6 +54,17 @@ let Game = {
     antiPlayer: {},
 
     menuElement: document.querySelector("#menu"),
+
+    // tworzenie gracza i mety
+    setGame: function () {
+        this.scale = Game.element.getBoundingClientRect().width / Game.width;
+
+        this.renderMap();
+        this.mainPlayer = new Player(35, 30, "blue");
+        this.winPoint = new Player(150, 130, "black");
+        this.checkForWin();
+    },
+
     // rysowanie planszy
     renderMap: function () {
         let wallsGroup = this.element.querySelector("#walls");
@@ -73,4 +84,47 @@ let Game = {
             }
         }
     }
+}
+
+//konstruktor dla gracza i mety
+let Player = function (posX, posY, color) {
+    this.element = {};
+
+    //pozycja gracza
+    this.x = 0;
+    this.y = 0;
+    this.r = 4.5;
+    this.ableToMove = false;
+
+    //przyspieszenie gracza
+    this.acc = {
+        x: 0,
+        y: 0,
+        max: 4
+    };
+
+    this.pPos = {
+        x: 1,
+        y: 1
+    };
+
+    this.setPlayer(posX, posY, color);
+    this.move();
+}
+
+//Osadzanie gracza na planszy
+Player.prototype.setPlayer = function (posX, posY, color) {
+    this.x = posX;
+    this.y = posY;
+
+    this.pPos.x = parseInt(this.x / Game.partSize);
+    this.pPos.y = parseInt(this.y / Game.partSize);
+
+    this.element = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+    this.element.setAttribute("cx", this.x);
+    this.element.setAttribute("cy", this.y);
+    this.element.setAttribute("r", Game.partSize * this.r * 0.1 * Game.scale);
+    this.element.setAttribute("fill", color);
+
+    Game.element.appendChild(this.element);
 }
