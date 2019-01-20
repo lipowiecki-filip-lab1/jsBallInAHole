@@ -83,6 +83,19 @@ let Game = {
                 wallsGroup.appendChild(newEl);
             }
         }
+    },
+    //sprawdzanie czy gracz i meta kolidują ze sobą
+    checkForWin: function () {
+        let dx = this.mainPlayer.x - this.winPoint.x;
+        let dy = this.mainPlayer.y - this.winPoint.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (this.mainPlayer.r + this.winPoint.r > distance)
+            console.log("win")
+        else
+            requestAnimationFrame(() => {
+                this.checkForWin()
+            });
     }
 }
 
@@ -127,4 +140,84 @@ Player.prototype.setPlayer = function (posX, posY, color) {
     this.element.setAttribute("fill", color);
 
     Game.element.appendChild(this.element);
+}
+
+// zwiekszanie predkosci na osi x
+Player.prototype.addVelocityX = function (val) {
+    this.acc.x += val;
+    if (Math.abs(this.acc.x) > this.acc.max) this.acc.x = this.acc.max * Math.sign(this.acc.x);
+}
+
+// zwiekszanie predkosci na osi y
+Player.prototype.addVelocityY = function (val) {
+    this.acc.y += val;
+    if (Math.abs(this.acc.y) > this.acc.max) this.acc.y = this.acc.max * Math.sign(this.acc.y);
+}
+
+//poruszanie graczem + testy kolizyjne
+Player.prototype.move = function () {
+    this.x += this.acc.x;
+    this.y += this.acc.y;
+
+    this.bouncing();
+
+    this.pPos.x = parseInt(this.x / 10);
+    this.pPos.y = parseInt(this.y / 10);
+
+    this.isFloorLava();
+
+    this.element.setAttributeNS(null, "cx", this.x * Game.scale);
+    this.element.setAttributeNS(null, "cy", this.y * Game.scale);
+
+    this.acc.x -= Math.sign(this.acc.x) * Game.friction;
+    this.acc.y -= Math.sign(this.acc.y) * Game.friction;
+
+
+    if (this.ableToMove) requestAnimationFrame(() => {
+        this.move()
+    });
+}
+
+// sprawdzanie czy gracz wpadł w "lawę"
+Player.prototype.isFloorLava = function () {
+    if (Game.map[this.pPos.y][this.pPos.x] == 2)
+        Game.gameOver();
+}
+
+//sprawdzanie czy gracz dotyka sciany
+Player.prototype.bouncing = function () {
+
+    if (Game.map[this.pPos.y][this.pPos.x + 1] == 1) {
+        if (this.x + this.r > (this.pPos.x + 1) * 10) {
+            this.acc.x = Math.abs(this.acc.x) * -Game.bounciness;
+            this.x = (this.pPos.x + 1) * 10 - this.r - 0.1;
+        }
+    }
+    if (Game.map[this.pPos.y][this.pPos.x - 1] == 1) {
+        if (this.x - this.r < (this.pPos.x) * 10) {
+            this.acc.x = Math.abs(this.acc.x) * Game.bounciness;
+            this.x = (this.pPos.x) * 10 + this.r + 0.1;
+        }
+    }
+
+    if (Game.map[this.pPos.y + 1][this.pPos.x] == 1) {
+        if (this.y + this.r > (this.pPos.y + 1) * 10) {
+            this.acc.y = Math.abs(this.acc.y) * -Game.bounciness;
+            this.y = (this.pPos.y + 1) * 10 - this.r - 0.1;
+        }
+    }
+
+    if (Game.map[this.pPos.y - 1][this.pPos.x] == 1) {
+        if (this.y - this.r < (this.pPos.y) * 10) {
+            this.acc.y = Math.abs(this.acc.y) * Game.bounciness;
+            this.y = (this.pPos.y) * 10 + this.r + 0.1;
+        }
+    }
+}
+
+//sterowanie sensorami
+function orientationChange(e) {
+    Game.mainPlayer.addVelocityX(e.alpha * Game.gravity);
+
+    Game.mainPlayer.addVelocityY((e.beta - 90) * Game.gravity);
 }
