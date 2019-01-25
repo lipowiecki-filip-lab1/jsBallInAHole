@@ -1,3 +1,5 @@
+//UWAGA! po otworzeniu konsoli w chromie do sterowania sesnorami trzeba przeładowac strone bo sie rozjeżdż (nie wiem czemu)
+
 document.addEventListener("DOMContentLoaded", onLoad)
 // selektory dla elementów dom
 function onLoad() {
@@ -55,6 +57,26 @@ let Game = {
 
     menuElement: document.querySelector("#menu"),
 
+    //restartowanie gry
+    restart: function () {
+        this.menuElement.style.display = "none";
+        if (this.firstLoose) {
+            this.firstLoose = false;
+            this.menuElement.querySelector("#add").style.display = "none";
+        }
+
+        let wallsGroup = this.element.querySelector("#walls");
+        while (wallsGroup.firstChild) {
+            wallsGroup.removeChild(wallsGroup.firstChild);
+        }
+        this.mainPlayer.element.remove();
+
+        this.setGame();
+        this.setMove(true);
+
+        document.addEventListener("keydown", keyHandler);
+    },
+
     // tworzenie gracza i mety
     setGame: function () {
         this.scale = Game.element.getBoundingClientRect().width / Game.width;
@@ -84,6 +106,7 @@ let Game = {
             }
         }
     },
+
     //sprawdzanie czy gracz i meta kolidują ze sobą
     checkForWin: function () {
         let dx = this.mainPlayer.x - this.winPoint.x;
@@ -91,11 +114,46 @@ let Game = {
         let distance = Math.sqrt(dx * dx + dy * dy);
 
         if (this.mainPlayer.r + this.winPoint.r > distance)
-            console.log("win")
+            this.win();
         else
             requestAnimationFrame(() => {
                 this.checkForWin()
             });
+    },
+
+    //wyświetlanie strony "wygrana"
+    win: function () {
+        this.menuElement.querySelector("#info").innerHTML = "Wygrana";
+        this.showMenu();
+    },
+
+    //wyświetlanie strony "porażka"
+    gameOver: function () {
+        this.menuElement.querySelector("#info").innerHTML = "Porażka";
+        if (this.firstLoose) this.menuElement.querySelector("#add").style.display = "inline";
+        this.showMenu();
+    },
+
+    //wyswietlanie panelu przegranej/wygranej
+    showMenu: function () {
+        this.menuElement.style.display = "flex";
+        document.removeEventListener("keydown", keyHandler);
+        this.setMove(false);
+    },
+
+    //przy rozpoczeciu gry
+    setMove: function (val) {
+        this.mainPlayer.ableToMove = val;
+        this.antiPlayer.ableToMove = val;
+
+        //zerowanie przyspieszenia
+        this.mainPlayer.acc = {
+            x: 0,
+            y: 0
+        };
+        if (val) {
+            this.mainPlayer.move();
+        }
     }
 }
 
